@@ -149,6 +149,9 @@ import "./index.scss";
 import { ExcalidrawPlusPromoBanner } from "./components/ExcalidrawPlusPromoBanner";
 import { AppSidebar } from "./components/AppSidebar";
 
+import { WorkspacePanel } from "./workspace/WorkspacePanel";
+import { useWorkspace } from "./workspace/useWorkspace";
+
 import type { CollabAPI } from "./collab/Collab";
 
 polyfill();
@@ -376,7 +379,10 @@ const ExcalidrawWrapper = () => {
   const excalidrawAPI = useExcalidrawAPI();
 
   const [errorMessage, setErrorMessage] = useState("");
+  const [sceneReady, setSceneReady] = useState(false);
   const isCollabDisabled = isRunningInIframe();
+
+  const workspaceController = useWorkspace({ excalidrawAPI, sceneReady });
 
   const { editorTheme, appTheme, setAppTheme } = useHandleAppTheme();
 
@@ -565,6 +571,7 @@ const ExcalidrawWrapper = () => {
     initializeScene({ collabAPI, excalidrawAPI }).then(async (data) => {
       loadImages(data, /* isInitialLoad */ true);
       initialStatePromiseRef.current.promise.resolve(data.scene);
+      setSceneReady(true);
     });
 
     const onHashChange = async (event: HashChangeEvent) => {
@@ -752,6 +759,8 @@ const ExcalidrawWrapper = () => {
         }
       });
     }
+
+    workspaceController.scheduleSave(elements, appState, files);
 
     // Render the debug scene if the debug canvas is available
     if (debugCanvasRef.current && excalidrawAPI) {
@@ -1297,6 +1306,7 @@ const ExcalidrawWrapper = () => {
           />
         )}
       </Excalidraw>
+      <WorkspacePanel controller={workspaceController} />
     </div>
   );
 };
